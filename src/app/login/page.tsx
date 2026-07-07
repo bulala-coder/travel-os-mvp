@@ -1,8 +1,29 @@
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Input } from "@/components/ui/Input";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
-export default function LoginPage() {
+import { LoginForm } from "./LoginForm";
+
+type LoginPageProps = {
+  searchParams: Promise<{
+    error?: string;
+    message?: string;
+    next?: string;
+  }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect("/dashboard");
+  }
+
+  const params = await searchParams;
+
   return (
     <div className="mx-auto flex w-full max-w-md px-4 py-16 sm:py-24">
       <Card className="w-full p-6 sm:p-8">
@@ -12,17 +33,11 @@ export default function LoginPage() {
         <p className="mt-2 text-sm leading-6 text-slate-600">
           登入後可以儲存與管理你的旅程。
         </p>
-        <form className="mt-7 space-y-5">
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">
-              Email
-            </span>
-            <Input type="email" placeholder="you@example.com" disabled />
-          </label>
-          <Button className="w-full" disabled>
-            登入（即將推出）
-          </Button>
-        </form>
+        <LoginForm
+          errorMessage={params.error}
+          successMessage={params.message}
+          nextPath={params.next}
+        />
       </Card>
     </div>
   );
